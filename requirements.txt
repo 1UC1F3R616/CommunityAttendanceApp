@@ -1,0 +1,9 @@
+eventlet
+Flask
+Flask-Cors
+flask-heroku
+Flask-SocketIO
+Flask-SQLAlchemy
+gunicorn
+postgres
+PyJWT
