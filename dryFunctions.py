@@ -7,6 +7,9 @@ import math
 import jwt
 import datetime
 import hashlib
+import requests
+import json
+
 from app import app
 
 import re
@@ -48,7 +51,7 @@ def distance(origin, destination):
 
 # JWT ENCODE/DECODE FUNCTIONS
 
-def encode_auth_token(user_id, remember_me=False):
+def encode_auth_token(user_id, remember_me=False, valid_minutes=None):
 
     """
     Generates the Auth Token
@@ -59,15 +62,22 @@ def encode_auth_token(user_id, remember_me=False):
     :return: JWT Token
     :rtype: string
     """
-    
+
     if remember_me:
         days_valid = 60
     else:
         days_valid = 1
+    
+    if valid_minutes:
+        valid_for = datetime.timedelta(minutes=valid_minutes)
+    else:
+        valid_for = datetime.timedelta(days=days_valid, seconds=5)
+
+    
 
     try:
         payload = {
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(days=days_valid, seconds=5), # valid upto
+            'exp': datetime.datetime.utcnow() + valid_for, # valid upto
             'iat': datetime.datetime.utcnow(), # created on
             'sub': user_id
         }
@@ -193,6 +203,11 @@ def hex_hash(arg1):
     return hash.hexdigest()
 
 def user_exist(email):
+    """
+    True: exists
+    False: not exists
+    """
+
     user_object = Users.query.filter_by(userEmail=email).first()
     if user_object:
         return True
@@ -205,7 +220,7 @@ def user_detail(email=None):
     if user_object:
         user_json = {
             'userId': user_object.userId,
-            'userName': user_object.userId,
+            'userName': user_object.userName,
             'userEmail': user_object.userEmail,
             'userPassword': user_object.userPassword
         }
@@ -217,4 +232,8 @@ def py_boolean(arg1):
     if arg1 in ['True', 'true', True, 1]:
         return True
     return False
+
+
+def send_email(url, email_header, email_body): # for sendgrid
+    requests.post(url, data=json.dumps(email_body), headers=email_header)
 
