@@ -201,7 +201,8 @@ def forgot_password():
                 "template_id": templateId
             }
         
-        threading.Thread(target=send_email, args=(url, email_header, email_body)).start()
+        #threading.Thread(target=send_email, args=(url, email_header, email_body)).start()
+        send_email(url, email_header, email_body)
 
         payLoad = {
             "email": userEmail,
