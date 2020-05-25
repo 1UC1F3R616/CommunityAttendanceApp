@@ -235,6 +235,6 @@ def py_boolean(arg1):
 
 
 def send_email(url, email_header, email_body): # for sendgrid
-    print('\n\nSending is happening\n\n')
+
     requests.post(url, data=json.dumps(email_body), headers=email_header)
-    print('\n\nSending is done\n\n')
+

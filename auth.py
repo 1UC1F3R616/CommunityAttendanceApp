@@ -201,8 +201,8 @@ def forgot_password():
                 "template_id": templateId
             }
         
-        #threading.Thread(target=send_email, args=(url, email_header, email_body)).start()
-        send_email(url, email_header, email_body)
+        threading.Thread(target=send_email, args=(url, email_header, email_body)).start()
+        #send_email(url, email_header, email_body)
 
         payLoad = {
             "email": userEmail,
@@ -216,7 +216,7 @@ def forgot_password():
 
 @auth_bp.route('/password/update/<emailHashToken>', methods=['GET', 'PATCH', 'POST'])
 def password_updation(emailHashToken):
-    print(request.method)
+
     userEmail = decode_auth_token(emailHashToken)
     
     if request.method=='POST':
