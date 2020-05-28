@@ -271,6 +271,23 @@ def logout_user():
             payLoad ={
                 "message": "logged-out-already"
             }
+        
+        elif malformed_length(
+            {
+                token: [3, 1024],
+            }
+        ):
+            payLoad = {
+                'message': ['this-request-is-not-processed',
+                'length-constraint-applied'
+                ]
+            }
+        
+        elif decode_auth_token(token) in ['Signature expired. Please log in again.', 'Invalid token. Please log in again.']:
+            payLoad = {
+                "message": ["not-a-valid-request",
+                "try-login-first"]
+            }
 
         else:
             blackListed = BlackListedTokens(token=token)
@@ -288,3 +305,6 @@ def logout_user():
     }
     return make_response(jsonify(payLoad), 400)
 
+
+
+    

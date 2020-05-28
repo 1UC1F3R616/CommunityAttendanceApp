@@ -162,7 +162,7 @@ class BlackListedTokens(db.Model):
     __tablename__ = 'blackListedTokens'
 
     id = db.Column(db.Integer, primary_key=True)
-    token = db.Column(db.String(128))
+    token = db.Column(db.String(1024))
 
     def __init__(self, token):
         self.token = token
