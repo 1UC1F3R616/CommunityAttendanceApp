@@ -155,3 +155,18 @@ class Attendances(db.Model):
         #return '<Users %r>' % self.userId
         return '<attendances ID:{} USER_ID:{} EVENT:{} COMMUNITY:{} STATUS:{} DATETIME:{}>'.format(self.id, self.userId, \
              self.eventId, self.communityId, str(self.status), str(self.datetime))
+
+
+class BlackListedTokens(db.Model):
+
+    __tablename__ = 'blackListedTokens'
+
+    id = db.Column(db.Integer, primary_key=True)
+    token = db.Column(db.String(128))
+
+    def __init__(self, token):
+        self.token = token
+    
+    def __repr__(self):
+        return '<blackListedTokens ID:{} TOKEN:{}>'.format(self.id, self.token)
+

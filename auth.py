@@ -260,3 +260,31 @@ def password_updation(emailHashToken):
             return render_template('passwordReset.html') #--todo--  # Redirect to home page
 
     return render_template('passwordReset.html')
+
+
+@auth_bp.route('logout/user', methods=['GET'])
+def logout_user():
+    token = request.headers.get('Authorization')
+
+    if token:
+        if isBlackListed(token):
+            payLoad ={
+                "message": "logged-out-already"
+            }
+
+        else:
+            blackListed = BlackListedTokens(token=token)
+            db.session.add(blackListed)
+            db.session.commit()
+
+            payLoad = {
+                "message": "user-logged-out"
+            }
+        
+        return make_response(jsonify(payLoad), 200)
+    
+    payLoad = {
+        "message": "missing-token"
+    }
+    return make_response(jsonify(payLoad), 400)
+

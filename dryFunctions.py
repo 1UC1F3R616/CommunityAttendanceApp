@@ -16,7 +16,7 @@ import re
 import smtplib
 import dns.resolver
 
-from models import Users
+from models import Users, BlackListedTokens
 
 # Distance Calculator
 def distance(origin, destination):
@@ -238,3 +238,17 @@ def send_email(url, email_header, email_body): # for sendgrid
 
     requests.post(url, data=json.dumps(email_body), headers=email_header)
 
+
+def isBlackListed(token):
+    """
+    True: Don't allow Access
+    False: Allow Access
+    """
+
+    if token:
+        token_query = BlackListedTokens.query.filter_by(token=token).first()
+        if token_query != None:
+            return True
+        else:
+            return False
+    return True
