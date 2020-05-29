@@ -15,6 +15,7 @@ class Users(db.Model):
     userName = db.Column(db.String(64), nullable=False)
     userEmail = db.Column(db.String(64), unique=True, nullable=False)
     userPassword = db.Column(db.String(64), nullable=False)
+    communities = db.relationship("Communities", cascade="all,delete", backref="users")
 
     def __init__(self, username, email, password):
         self.userName = username
@@ -31,17 +32,20 @@ class Communities(db.Model):
     __tablename__ = 'communities'
 
     communityId = db.Column(db.Integer, primary_key=True)
-    CommunityName = db.Column(db.String(64), nullable=False)
-    communityDescription = db.Column(db.String(64))
+    userId = db.Column(db.Integer, db.ForeignKey('users.userId', ondelete='CASCADE'))
+
+    communityName = db.Column(db.String(64), nullable=False)
+    communityDescription = db.Column(db.String(256))
     joinToken = db.Column(db.String(16), default=generateJoinToken)
     joinTokenValid = db.Column(db.Boolean, default=1) # This is not added in RelationalModel #--todo--
 
-    def __init__(self, name, description):
-        self.CommunityName = name
+    def __init__(self, userId, name, description):
+        self.userId = userId
+        self.communityName = name
         self.communityDescription = description
 
     def __repr__(self):
-        return '<communities ID:{} NAME:{} DESCRIPTION:{}>'.format(self.communityId, self.CommunityName, self.communityDescription)
+        return '<communities ID:{} NAME:{} DESCRIPTION:{} ADMIN_ID:{}>'.format(self.communityId, self.communityName, self.communityDescription, self.userId)
 
 
 class CommunityMembers(db.Model):
