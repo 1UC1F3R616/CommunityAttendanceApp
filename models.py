@@ -4,7 +4,7 @@ import secrets
 
 def generateJoinToken():
 
-    return secrets.token_urlsafe(16)
+    return secrets.token_urlsafe(10) #--todo-- set to 16 and change model to accept 32 | 22 is enough
 
 
 class Users(db.Model):
