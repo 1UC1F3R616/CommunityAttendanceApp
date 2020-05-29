@@ -1,6 +1,7 @@
 import sys
 sys.path.insert(0, '.')
-from flask import Flask
+from flask import (Flask,
+    render_template)
 from flask_sqlalchemy import SQLAlchemy
 from os import getcwd, environ
 from os.path import join
@@ -22,6 +23,11 @@ else:
     app.config['SQLALCHEMY_DATABASE_URI'] = PG
 
 db = SQLAlchemy(app)
+
+
+@app.errorhandler(404)
+def error404(error):
+    return render_template('404page.html')
 
 
 # Importing BluePrint
