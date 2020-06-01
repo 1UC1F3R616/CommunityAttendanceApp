@@ -49,6 +49,11 @@ def create_community():
             'message': 'fresh-login-required'
         }
     
+    elif isBlackListed(token):
+        payLoad = {
+            'message': 'login-required'
+        }
+    
     else:
         # If a User creates a two community with same names then that's a problem
         userId = decode_auth_token(token)
