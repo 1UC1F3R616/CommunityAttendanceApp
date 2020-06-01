@@ -4,7 +4,7 @@ import secrets
 
 def generateJoinToken():
 
-    return secrets.token_urlsafe(10) #--todo-- set to 16 and change model to accept 32 | 22 is enough
+    return secrets.token_urlsafe(16) # model to accept 32 | 22 is enough
 
 
 class Users(db.Model):
@@ -17,26 +17,32 @@ class Users(db.Model):
     userPassword = db.Column(db.String(64), nullable=False)
     communities = db.relationship("Communities", cascade="all,delete", backref="users")
 
+    members = db.relationship("CommunityMembers", cascade="all,delete", backref="users") # fk with CommunityMembers table
+
     def __init__(self, username, email, password):
         self.userName = username
         self.userEmail = email
         self.userPassword = password
 
     def __repr__(self):
-        #return '<Users %r>' % self.userId
         return '<users ID:{} NAME:{} EMAIL:{}>'.format(self.userId, self.userName, self.userEmail)
 
 
 class Communities(db.Model):
+    """
+    FK Relation: parent is Users
+    """
 
     __tablename__ = 'communities'
 
     communityId = db.Column(db.Integer, primary_key=True)
     userId = db.Column(db.Integer, db.ForeignKey('users.userId', ondelete='CASCADE'))
 
+    members = db.relationship("CommunityMembers", cascade="all,delete", backref="communities") # fk with CommunityMembers table
+
     communityName = db.Column(db.String(64), nullable=False)
     communityDescription = db.Column(db.String(256))
-    joinToken = db.Column(db.String(16), default=generateJoinToken)
+    joinToken = db.Column(db.String(32), default=generateJoinToken)
     joinTokenValid = db.Column(db.Boolean, default=1) # This is not added in RelationalModel #--todo--
 
     def __init__(self, userId, name, description):
@@ -51,13 +57,24 @@ class Communities(db.Model):
 class CommunityMembers(db.Model):
     """
     when a user joins a community then their id and community id are tracked here
+    User is Deleted => Delete Cascade on that user id here
+    Community is Deleted => Delete Cascade on that community id here
+    FK Relation: parent is Users
+    FK Relation: parent is Communities
     """
 
     __tablename__ = 'communityMembers'
 
     id = db.Column(db.Integer, primary_key=True)
-    communityId = db.Column(db.Integer)
-    userId = db.Column(db.Integer)
+    # communityId = db.Column(db.Integer)
+    # userId = db.Column(db.Integer)
+
+    userId = db.Column(db.Integer, db.ForeignKey('users.userId', ondelete='CASCADE'))
+    communityId = db.Column(db.Integer, db.ForeignKey('communities.communityId', ondelete='CASCADE'))
+
+    def __init__(self, userId, communityId):
+        self.userId = userId
+        self.communityId = communityId
 
     def __repr__(self):
         return '<communityMembers ID:{} COMMUNITY_ID:{} USER_ID:{}>'.format(self.id, self.communityId, self.userId)

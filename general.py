@@ -13,7 +13,8 @@ from app import db
 from dryFunctions import *
 from models import (
     Users,
-    Communities
+    Communities,
+    CommunityMembers
 )
 
 
@@ -86,6 +87,85 @@ def create_community():
         }
 
         return make_response(jsonify(payLoad), 201)
+    
+    return make_response(jsonify(payLoad), 400)
+
+
+@general_bp.route('/community/join', methods=['POST'])
+def join_community():
+    token = request.headers.get('Authorization')
+    joinToken = request.json.get('joinToken')
+
+    if find_missing(token, joinToken):
+        payLoad = {
+            'message': 'missing-params'
+        }
+    
+    elif malformed_length(
+        {
+            joinToken: [16, 32], # 22 exactly
+        }
+    ):
+        payLoad = {
+            'message': 'bad-length-params'
+        }
+    
+    elif decode_auth_token(token) in ['Signature expired. Please log in again.', 'Invalid token. Please log in again.']:
+        payLoad = {
+            'message': 'fresh-login-required'
+        }
+    
+    elif isBlackListed(token):
+        payLoad = {
+            'message': 'login-required'
+        }
+
+    else:
+        
+        userId = decode_auth_token(token)
+
+
+        comJoinToken = Communities.query.filter_by(joinToken=joinToken).first()
+
+        if comJoinToken == None:
+            payLoad = {
+                'message': 'incorrect-join-token'
+            }
+            return make_response(jsonify(payLoad), 400)
+
+        elif py_boolean(comJoinToken.joinTokenValid) == False:
+            payLoad = {
+                'message': 'community-joining-is-closed'
+            }
+            return make_response(jsonify(payLoad), 403)
+
+
+        communityId = comJoinToken.communityId
+
+        # user me join same community more than once
+        try:
+            userInCommunity = CommunityMembers.query.filter(CommunityMembers.userId==userId, CommunityMembers.communityId==communityId).first()
+            if userInCommunity != None:
+                payLoad = {
+                    'message': 'you-are-already-in-this-community'
+                }
+                return make_response(jsonify(payLoad), 400)
+                
+        except Exception as e:
+            print(str(e))
+        
+
+        communityMember = CommunityMembers(userId, communityId)
+        db.session.add(communityMember)
+        db.session.commit()
+
+        payLoad = {
+            'userId': userId,
+            'communityId': communityId,
+            'message': 'community-successfully-joined'
+        }
+
+        return make_response(jsonify(payLoad), 200)
     
     return make_response(jsonify(payLoad), 400)
 
