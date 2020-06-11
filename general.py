@@ -386,3 +386,112 @@ def view_holded():
         return make_response(jsonify(payLoad), 200)
 
     return make_response(jsonify(payLoad), 400)
+
+
+# Holded Event
+@general_bp.route('/event/start/<otpNumber>', methods=['POST'])
+def start_event(otpNumber):
+    """
+    This will start the event those are present in holded events
+    Post Req: latitude, longitude, authToken
+    """
+    
+    token = request.headers.get('Authorization')
+    latitude_ = request.json.get('latitude')
+    longitude_ = request.json.get('longitude')
+
+    holdedQuery = HoldedEvents.query.filter_by(otp=otpNumber).first()
+    otp_check = holdedQuery
+    
+
+    if otp_check in [None, '']: #does not exsists
+        payLoad = {
+            'Status': 'Fail',
+            'Reason': 'no-such-holded-event'
+        }
+    elif find_missing(token, latitude_, longitude_,):
+        payLoad = {
+            'message': 'missing-params',
+            'header': ['Authorization', ],
+            'body': ['latitude', 'longitude']
+        }
+    elif malformed_length(
+        {
+            token: [16, 1024],
+        }
+    ):
+        payLoad = {
+            'message': 'bad-length-params'
+        }
+    elif malformed_dtc(
+        {
+            latitude_: 'f',
+            longitude_: 'f'
+        }
+    ):
+        payLoad = {
+            'message': 'bad-datatype'
+        }
+    elif decode_auth_token(token) in ['Signature expired. Please log in again.', 'Invalid token. Please log in again.']:
+        payLoad = {
+            'message': 'fresh-login-required'
+        }
+    
+    elif isBlackListed(token):
+        payLoad = {
+            'message': 'login-required'
+        }
+
+    else:
+
+        latitude_ = float(latitude_)
+        longitude_ = float(longitude_)
+
+        communityId_ = holdedQuery.communityId
+
+        # check if user has that community registered under him/her and is Authorized
+
+        userId = decode_auth_token(token)
+        userEmail_ = Users.query.get(userId).userEmail
+        communityRegistered = [x.communityId for x in Communities.query.filter_by(userId=userId).all()]
+
+        if communityId_ not in communityRegistered:
+            payLoad = {
+                'message': 'You-Are-Not-Registered-as-Community-Head-for-this-company'
+            }
+            return make_response(jsonify(payLoad), 403)
+
+        creation_date_ = otp_check.creation_date
+        userEmail_ = otp_check.userEmail
+        otp_ = otpNumber
+        event_name_ = otp_check.event_name
+        event_description_ = otp_check.event_description
+        ending_time_delta_ = otp_check.ending_time_delta
+        location_range_ = otp_check.location_range
+        broadcast_choice_ = otp_check.broadcast_choice
+        communityId_ = otp_check.communityId
+
+        new_event = Events(creation_date= creation_date_, userEmail=userEmail_, \
+                otp=otp_, event_name=event_name_, event_description=event_description_, \
+                ending_time_delta=ending_time_delta_, location_range=location_range_, \
+                latitude=latitude_, longitude=longitude_, broadcast_choice=broadcast_choice_, \
+                communityId=communityId_)
+
+        db.session.add(new_event)
+
+        HoldedEvents.query.filter_by(otp=otpNumber).delete()
+
+        db.session.commit()
+
+        payLoad = {
+            'OTP': otp_,
+            'EventName': event_name_,
+            'EndingInMin': ending_time_delta_,
+            'CommunityId': communityId_,
+            'EventStarted': True,
+            'BroadcastChoice': broadcast_choice_,
+            'LocationValidInMeters': location_range_
+        }
+        return make_response(payLoad, 200)
+    
+    return make_response(payLoad, 400)
