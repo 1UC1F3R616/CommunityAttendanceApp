@@ -323,3 +323,66 @@ def set_event():
             return make_response(payLoad, 201) # Object of type Response is not JSON serializable
     
     return make_response(payLoad, 400)
+
+
+# Holded Events View
+@general_bp.route('/event/holded', methods=['POST'])
+def view_holded():
+    """
+    Shows all holded events from here start event can be clicked
+    and then otp is passed dynamically to the start event
+    """
+
+    token = request.headers.get('Authorization')
+    communityId_ = request.json.get('communityId') # Has to be passed
+
+    if find_missing(token, communityId_):
+        payLoad = {
+            'message': 'missing-params'
+        }
+    
+    elif malformed_length(
+        {
+            token: [16, 1024], # 22 exactly
+        }
+    ):
+        payLoad = {
+            'message': 'bad-length-params'
+        }
+    
+    elif decode_auth_token(token) in ['Signature expired. Please log in again.', 'Invalid token. Please log in again.']:
+        payLoad = {
+            'message': 'fresh-login-required'
+        }
+    
+    elif isBlackListed(token):
+        payLoad = {
+            'message': 'login-required'
+        }
+
+    else:
+    
+        userId = decode_auth_token(token)
+        userEmail_ = Users.query.get(userId).userEmail
+        holdedEvents = HoldedEvents.query.filter(HoldedEvents.userEmail==userEmail_, HoldedEvents.communityId == communityId_).all()
+
+        holdedEventsArray = []
+
+        for event in holdedEvents:
+            adder = {
+                "holdId": event.holdId,
+                "CreationDate": event.creation_date, #--todo-- improve the format
+                "OTP":event.otp,
+                "EventName": event.event_name,
+                "EventDescription": event.event_description,
+                "LocationValidInMeters": event.location_range,
+                "EndingInMin": event.ending_time_delta,
+                "BroadcastChoice": event.broadcast_choice,
+                "CommunityId": event.communityId
+            }
+            holdedEventsArray.append(adder)
+        payLoad = holdedEventsArray
+
+        return make_response(jsonify(payLoad), 200)
+
+    return make_response(jsonify(payLoad), 400)
