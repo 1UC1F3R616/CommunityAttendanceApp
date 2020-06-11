@@ -16,7 +16,7 @@ import re
 import smtplib
 import dns.resolver
 
-from models import Users, BlackListedTokens
+from models import Users, BlackListedTokens, Events, HoldedEvents
 
 # Distance Calculator
 def distance(origin, destination):
@@ -181,11 +181,43 @@ def is_email_valid(email_):
 def malformed_length(arg1):
     """
     If True then length is malformed
-    Pass a Dictionary Object, key is the string
+    Pass a Dictionary Object, key is the variable
     and Value is the tuple with min, max length inclusive
     """
     for key, value in arg1.items():
         if len(key) < value[0] or len(key) > value[1]:
+            return True
+    return False
+
+# Cou
+# def malformed_dt(arg1):
+#     """
+#     If True then datatype is malformed
+#     Pass a Dictionary Object, key is the variable
+#     and value is the required datatype
+#     """
+#     for key, value in arg1.items():
+#         if type(key) != type(value):
+#             return True
+#     return False
+
+
+def malformed_dtc(arg1):
+    """
+    If True then datatype conversion is error prone
+    Pass a Dictionary Object, key is the variable
+    and value is the required datatype mapped string as
+    i: int, f: float, s: string
+    """
+    for key, value in arg1.items():
+        try:
+            if value == 'i':
+                int(key)
+            elif value == 'f':
+                float(key)
+            elif value == 's':
+                str(key)
+        except:
             return True
     return False
 
@@ -229,7 +261,7 @@ def user_detail(email=None):
 
 
 def py_boolean(arg1):
-    if arg1 in ['True', 'true', True, 1]:
+    if arg1 in ['True', 'true', True, 1, '1']:
         return True
     return False
 
@@ -240,6 +272,7 @@ def send_email(url, email_header, email_body): # for sendgrid
 
 
 def isBlackListed(token):
+
     """
     True: Don't allow Access
     False: Allow Access
@@ -253,3 +286,49 @@ def isBlackListed(token):
             return False
     return True
 
+
+def random_otp():
+
+    """
+    :return: OTP for Event
+    :return type: string
+    """
+    try:
+        all_events = Events.query.all() # Here Error if no Event
+        all_holded_events = HoldedEvents.query.all()
+
+        used_otps = set()
+        for otp_ in all_events:
+            used_otps.add(str(otp_.otp))
+        for otp_ in all_holded_events:
+            used_otps.add(str(otp_.otp))
+                
+        total_otps = set()
+        available_otps = set()
+        for otp_ in range(0, 999999+1):
+            otp = str(otp_)
+            if len(otp)!=6:
+                diff = 6-len(otp)
+                otp = '0'*diff + otp
+            total_otps.add(otp)
+
+            available_otps = total_otps - used_otps
+            if len(available_otps) == 1:
+                return available_otps.pop()
+        else:
+            return 'Fail'
+    except:
+        return 'Fail'
+
+
+def validFloat(someString):
+
+    """
+    return float type
+    return -1.1 if type converstion fails
+    """
+
+    try:
+        return float(someString)
+    except:
+        return -1.1

@@ -31,6 +31,10 @@ class Users(db.Model):
 class Communities(db.Model):
     """
     FK Relation: parent is Users
+
+    Admin is someone who creates the community
+    One Insta Account Cann't have more than 1 Password or Email (2 users without pass sharing), 
+    Community is like an account
     """
 
     __tablename__ = 'communities'
@@ -137,7 +141,7 @@ class HoldedEvents(db.Model):
     communityId = db.Column(db.Integer)
 
     def __init__(self, creation_date, userEmail, otp, event_name, event_description, ending_time_delta, location_range, \
-        latitude, longitude, broadcast_choice, communityId):
+        broadcast_choice, communityId):
         self.creation_date = creation_date
         self.userEmail = userEmail
         self.otp = otp
