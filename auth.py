@@ -16,14 +16,17 @@ auth_bp = Blueprint('auth_bp',
     )
 
 from app import db
-from models import Users, BlackListedTokens
 from dryFunctions import *
+from models import Users, BlackListedTokens
 
 sg_api = environ.get('SG_API')
 
 
 @auth_bp.route('/register/user', methods=['POST'])
 def user_registration():
+    print('\n\n\n')
+    print(str(request.json))
+    print('\n\n\n')
     userName = request.json.get('userName')
     userEmail = request.json.get('userEmail')
     userPassword = request.json.get('userPassword')
@@ -180,6 +183,7 @@ def forgot_password():
         templateId = "d-bca83b14b0f44357b6a78fe531249832"
 
         url = "https://api.sendgrid.com/v3/mail/send"
+        print(sg_api)
         email_header = {'Content-Type': 'application/json', "Authorization": sg_api}
         email_body = {
                 "personalizations": [

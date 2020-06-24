@@ -16,7 +16,7 @@ import re
 import smtplib
 import dns.resolver
 
-from models import Users, BlackListedTokens, Events, HoldedEvents
+from models import Users, BlackListedTokens, Events, HoldedEvents, Attendances
 
 # Distance Calculator
 def distance(origin, destination):
@@ -100,6 +100,7 @@ def decode_auth_token(auth_token='auth_header'):
     :rtype: Integer |  String
     """
     try:
+        print('Initial Auth Token is ' + str(auth_token))
         auth_token = auth_token.split('Bearer ')[1]
         payload = jwt.decode(auth_token, 'secret')#app.config.get('SECRET_KEY')) #--todo--
         return payload['sub']
@@ -348,12 +349,12 @@ def user_info(token):
     :rtype: Dict | String
     """
     try:
-        auth_token = token.split(" ")[0]
+        auth_token = token #token.split(" ")[0]
     except: # No JWT Token in header
         return 'AuthFail'
     resp = decode_auth_token(auth_token)
     if not isinstance(resp, str):
-        user = Users.query.filter_by(id=resp).first()
+        user = Users.query.filter_by(userId=resp).first()
 
         try: # suppose a user is deleted, then token is valid, and thus request reaches here and then error as no id for deleted user
             return {

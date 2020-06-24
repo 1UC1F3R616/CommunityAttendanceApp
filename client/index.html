@@ -1,0 +1,63 @@
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Chat Room</title>
+    <script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.8/socket.io.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+</head>
+
+<body>
+
+    <ul id="messages"></ul>
+    <input type="text" id="myMessage">
+    <button id="attendence_button">Attendence</button>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            const dev_url = "http://127.0.0.1:5000";
+
+            var socket = io.connect(dev_url)
+            var socket_attendence = io('http://127.0.0.1:5000/attendence_namespace')
+            var socket_admin = io('http://127.0.0.1:5000/admin_namespace')
+            var socket_rooms = io('http://127.0.0.1:5000/rooms_namespace')
+
+            $('#attendence_button').on('click', function () {
+                const token = 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1OTgxNTA5NjUsImlhdCI6MTU5Mjk2Njk2MCwic3ViIjoxfQ.dCm85YfVapme05zzmZ5q1QVeMzYwJiLQNsSwLxnrCow'
+                socket_attendence.emit('attendence_request', { 'otp': $('#myMessage').val(), 'token': token, 'latitude': 100, 'longitude': 100.0001 });
+            });
+
+            socket_attendence.on('attendence_result', function (json) {
+                $("#messages").append('<li>' + json + '</li>');
+                console.log('Received message on attendence_namespace');
+            });
+
+
+
+            socket_admin.on('admin_listen', function (json) {
+                $("#messages").append('<li>' + json + '</li>');
+                $("#messages").append('<li>' + 'upper one recived for admin_namespace' + '</li>');
+                // Check if it's allowed to broadcast to rooms, if not then don't emit below to room socket else do emit
+                socket_rooms.emit('join', json);
+                console.log('Received message on admin_namespace');
+            });
+
+            socket_rooms.on('join_room', function (msg) {
+                console.log(msg);
+            });
+
+            socket_rooms.on('leave_room', function (msg) {
+                console.log(json);
+            });
+
+
+        });
+
+    </script>
+
+
+</body>
+
+</html>
