@@ -16,7 +16,7 @@ auth_bp = Blueprint('auth_bp',
     )
 
 from app import db
-from models import Users
+from models import Users, BlackListedTokens
 from dryFunctions import *
 
 sg_api = environ.get('SG_API')
@@ -265,7 +265,7 @@ def password_updation(emailHashToken):
 @auth_bp.route('logout/user', methods=['GET'])
 def logout_user():
     token = request.headers.get('Authorization')
-
+    print(token)
     if token:
         if isBlackListed(token):
             payLoad ={

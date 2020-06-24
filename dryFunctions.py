@@ -100,6 +100,7 @@ def decode_auth_token(auth_token='auth_header'):
     :rtype: Integer |  String
     """
     try:
+        auth_token = auth_token.split('Bearer ')[1]
         payload = jwt.decode(auth_token, 'secret')#app.config.get('SECRET_KEY')) #--todo--
         return payload['sub']
     except jwt.ExpiredSignatureError:
@@ -321,6 +322,8 @@ def random_otp():
         return 'Fail'
 
 
+
+## Functions to Inherit the old code
 def validFloat(someString):
 
     """
@@ -332,3 +335,34 @@ def validFloat(someString):
         return float(someString)
     except:
         return -1.1
+
+
+## Functions to Inherit the old code
+def user_info(token):
+
+    """
+    Give User Details by simplying passing JWT Token
+    :param arg1: JWT Token
+    :type arg1: String
+    :return: User Detail | 'AuthFail'
+    :rtype: Dict | String
+    """
+    try:
+        auth_token = token.split(" ")[0]
+    except: # No JWT Token in header
+        return 'AuthFail'
+    resp = decode_auth_token(auth_token)
+    if not isinstance(resp, str):
+        user = Users.query.filter_by(id=resp).first()
+
+        try: # suppose a user is deleted, then token is valid, and thus request reaches here and then error as no id for deleted user
+            return {
+                'id':user.userId,
+                'email':user.userEmail,
+                'username':user.userName,
+                'admin':True
+            }
+        except:
+            return 'AuthFail'
+
+    return 'AuthFail' #This should have been changed to dict type
